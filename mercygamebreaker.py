@@ -143,3 +143,45 @@ class Paddle(GameObject):
                 self.canvas.move(part, offset, 0)
             if self.ball is not None:
                 self.ball.move(offset, 0)
+class Brick(GameObject):
+    COLORS_FIRE = {1: '#ff5252', 2: '#ff793f', 3: '#b33939'}
+    COLORS_WATER = {1: '#00d2d3', 2: '#0abde3', 3: '#2e86de'}
+
+    def __init__(self, canvas, x, y, hits, game_instance, mode='fire'):
+        self.width = 75
+        self.height = 24
+        self.hits = hits
+        self.x = x
+        self.y = y
+        self.game_instance = game_instance
+        self.mode = mode
+        
+        colors = self.COLORS_WATER if mode == 'water' else self.COLORS_FIRE
+        outline_color = '#48dbfb' if mode == 'water' else '#ffb142'
+        
+        color = colors[hits]
+        item = canvas.create_rectangle(x - self.width / 2,
+                                       y - self.height / 2,
+                                       x + self.width / 2,
+                                       y + self.height / 2,
+                                       fill=color, outline=outline_color, width=2, tags='brick')
+        super(Brick, self).__init__(canvas, item)
+
+        self.decors = []
+        if mode == 'fire':
+            offsets = [-24, -8, 8, 24]
+            for dx in offsets:
+                f1 = canvas.create_polygon(x + dx - 5, y + 10, x + dx, y - 7, x + dx + 5, y + 10, fill='#ffda79', outline='')
+                f2 = canvas.create_polygon(x + dx - 3, y + 10, x + dx, y - 1, x + dx + 3, y + 10, fill='#ff5252', outline='')
+                self.decors.extend([f1, f2])
+        else:
+            offsets = [-20, 0, 20]
+            for dx in offsets:
+                w1 = canvas.create_oval(x + dx - 8, y - 6, x + dx + 8, y + 6, fill='#c8d6e5', outline='')
+                w2 = canvas.create_oval(x + dx - 4, y - 3, x + dx + 4, y + 3, fill='#ffffff', outline='')
+                self.decors.extend([w1, w2])
+
+    def animate(self):
+        for d in self.decors:
+            dy = random.choice([-1, 0, 1])
+            self.canvas.move(d, 0, dy)
