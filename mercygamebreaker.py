@@ -185,3 +185,68 @@ class Brick(GameObject):
         for d in self.decors:
             dy = random.choice([-1, 0, 1])
             self.canvas.move(d, 0, dy)
+class Game(tk.Frame):
+    def __init__(self, master):
+        super(Game, self).__init__(master)
+        self.lives = 3
+        self.score = 0
+        self.width = 610
+        self.height = 420
+        self.canvas = tk.Canvas(self, bg='#111111',
+                                width=self.width,
+                                height=self.height)
+        self.canvas.pack()
+        self.pack()
+
+        self.draw_race_track_background()
+
+        self.items = {}
+        self.bricks = []
+        self.ball = None
+        self.game_mode = 'fire'
+        
+        self.paddle = Paddle(self.canvas, self.width / 2, 355)
+        self.items[self.paddle.item] = self.paddle
+
+        self.create_bricks()
+
+        self.hud_score = None
+        self.hud_lives = None
+        self.setup_game()
+        self.canvas.focus_set()
+        self.canvas.bind('<Left>', lambda _: self.paddle.move(-22))
+        self.canvas.bind('<Right>', lambda _: self.paddle.move(22))
+
+    def add_score(self, points):
+        self.score += points
+        self.update_hud()
+
+    def draw_race_track_background(self):
+        for y_pos in range(20, self.height, 40):
+            self.canvas.create_line(self.width / 2, y_pos, self.width / 2, y_pos + 20, fill='#333333', width=6)
+        
+        for y_pos in range(0, self.height, 20):
+            color_left = '#ff3838' if (y_pos // 20) % 2 == 0 else '#f5f6fa'
+            color_right = '#f5f6fa' if (y_pos // 20) % 2 == 0 else '#ff3838'
+            self.canvas.create_rectangle(0, y_pos, 10, y_pos + 20, fill=color_left, outline='')
+            self.canvas.create_rectangle(self.width - 10, y_pos, self.width, y_pos + 20, fill=color_right, outline='')
+
+    def update_hud(self):
+        score_text = f'SCORE: {self.score}'
+        lives_text = f'LIVES: {self.lives}'
+        
+        if self.hud_score is None:
+            self.hud_score = self.draw_text(85, 22, score_text, 15, '#2ed573')
+        else:
+            self.canvas.itemconfig(self.hud_score, text=score_text)
+
+        if self.hud_lives is None:
+            self.hud_lives = self.draw_text(525, 22, lives_text, 15, '#ff5252')
+        else:
+            self.canvas.itemconfig(self.hud_lives, text=lives_text)
+
+    def check_collisions(self):
+        ball_coords = self.ball.get_position()
+        items = self.canvas.find_overlapping(*ball_coords)
+        objects = [self.items[x] for x in items if x in self.items]
+        self.ball.collide(objects)
