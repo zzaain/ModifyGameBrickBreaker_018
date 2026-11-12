@@ -98,6 +98,8 @@ class Ball(GameObject):
         for game_object in game_objects:
             if isinstance(game_object, Brick):
                 game_object.hit()
+
+
 class Paddle(GameObject):
     def __init__(self, canvas, x, y):
         self.width = 110
@@ -143,6 +145,8 @@ class Paddle(GameObject):
                 self.canvas.move(part, offset, 0)
             if self.ball is not None:
                 self.ball.move(offset, 0)
+
+
 class Brick(GameObject):
     COLORS_FIRE = {1: '#ff5252', 2: '#ff793f', 3: '#b33939'}
     COLORS_WATER = {1: '#00d2d3', 2: '#0abde3', 3: '#2e86de'}
@@ -185,6 +189,29 @@ class Brick(GameObject):
         for d in self.decors:
             dy = random.choice([-1, 0, 1])
             self.canvas.move(d, 0, dy)
+
+    def hit(self):
+        points = self.hits * 10
+        self.game_instance.add_score(points)
+
+        self.hits -= 1
+        colors = self.COLORS_WATER if self.mode == 'water' else self.COLORS_FIRE
+        if self.hits == 0:
+            for d in self.decors:
+                self.canvas.delete(d)
+            self.delete()
+            try:
+                winsound.Beep(1200, 80)
+            except:
+                pass
+        else:
+            self.canvas.itemconfig(self.item, fill=colors[self.hits])
+            try:
+                winsound.Beep(900, 50)
+            except:
+                pass
+
+
 class Game(tk.Frame):
     def __init__(self, master):
         super(Game, self).__init__(master)
@@ -231,27 +258,7 @@ class Game(tk.Frame):
             self.canvas.create_rectangle(0, y_pos, 10, y_pos + 20, fill=color_left, outline='')
             self.canvas.create_rectangle(self.width - 10, y_pos, self.width, y_pos + 20, fill=color_right, outline='')
 
-    def update_hud(self):
-        score_text = f'SCORE: {self.score}'
-        lives_text = f'LIVES: {self.lives}'
-        
-        if self.hud_score is None:
-            self.hud_score = self.draw_text(85, 22, score_text, 15, '#2ed573')
-        else:
-            self.canvas.itemconfig(self.hud_score, text=score_text)
-
-        if self.hud_lives is None:
-            self.hud_lives = self.draw_text(525, 22, lives_text, 15, '#ff5252')
-        else:
-            self.canvas.itemconfig(self.hud_lives, text=lives_text)
-
-   def check_collisions(self):
-        ball_coords = self.ball.get_position()
-        items = self.canvas.find_overlapping(*ball_coords)
-        objects = [self.items[x] for x in items if x in self.items]
-        self.ball.collide(objects)
-
-def create_bricks(self):
+    def create_bricks(self):
         for b in self.bricks:
             b.delete()
         self.bricks.clear()
@@ -291,6 +298,20 @@ def create_bricks(self):
     def draw_text(self, x, y, text, size='36', color='white'):
         font = ('Impact', size)
         return self.canvas.create_text(x, y, text=text, font=font, fill=color)
+
+    def update_hud(self):
+        score_text = f'SCORE: {self.score}'
+        lives_text = f'LIVES: {self.lives}'
+        
+        if self.hud_score is None:
+            self.hud_score = self.draw_text(85, 22, score_text, 15, '#2ed573')
+        else:
+            self.canvas.itemconfig(self.hud_score, text=score_text)
+
+        if self.hud_lives is None:
+            self.hud_lives = self.draw_text(525, 22, lives_text, 15, '#ff5252')
+        else:
+            self.canvas.itemconfig(self.hud_lives, text=lives_text)
 
     def start_game(self):
         self.canvas.unbind('<space>')
