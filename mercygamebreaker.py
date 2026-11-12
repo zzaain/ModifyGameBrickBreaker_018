@@ -98,3 +98,48 @@ class Ball(GameObject):
         for game_object in game_objects:
             if isinstance(game_object, Brick):
                 game_object.hit()
+class Paddle(GameObject):
+    def __init__(self, canvas, x, y):
+        self.width = 110
+        self.height = 18
+        self.ball = None
+
+        item = canvas.create_rectangle(x - self.width / 2,
+                                       y - self.height / 2,
+                                       x + self.width / 2,
+                                       y + self.height / 2,
+                                       fill='', outline='')
+        super(Paddle, self).__init__(canvas, item)
+
+        self.car_parts = []
+        body = canvas.create_rectangle(x - 55, y - 4, x + 55, y + 8,
+                                       fill='#dcdde1', outline='#7f8fa6', width=1)
+        cabin = canvas.create_polygon(x - 32, y - 4, x - 18, y - 15,
+                                      x + 22, y - 15, x + 36, y - 4,
+                                      fill='#2f3640', outline='#dcdde1', width=2)
+        headlight = canvas.create_rectangle(x + 48, y - 2, x + 55, y + 3, fill='#00a8ff', outline='')
+        taillight = canvas.create_rectangle(x - 55, y - 2, x - 48, y + 3, fill='#e84118', outline='')
+        wheel_l = canvas.create_oval(x - 42, y + 2, x - 24, y + 16, fill='#1e272e', outline='#7f8fa6', width=2)
+        rim_l = canvas.create_oval(x - 36, y + 6, x - 30, y + 12, fill='#f5f6fa', outline='')
+        wheel_r = canvas.create_oval(x + 24, y + 2, x + 42, y + 16, fill='#1e272e', outline='#7f8fa6', width=2)
+        rim_r = canvas.create_oval(x + 30, y + 6, x + 36, y + 12, fill='#f5f6fa', outline='')
+        
+        logo_circle = canvas.create_oval(x - 6, y - 3, x + 6, y + 7, outline='#2f3640', fill='#f5f6fa', width=1)
+        star1 = canvas.create_line(x, y - 3, x, y + 2, fill='#2f3640', width=1)
+        star2 = canvas.create_line(x, y + 2, x - 4, y + 5, fill='#2f3640', width=1)
+        star3 = canvas.create_line(x, y + 2, x + 4, y + 5, fill='#2f3640', width=1)
+
+        self.car_parts = [body, cabin, headlight, taillight, wheel_l, rim_l, wheel_r, rim_r, logo_circle, star1, star2, star3]
+
+    def set_ball(self, ball):
+        self.ball = ball
+
+    def move(self, offset):
+        coords = self.get_position()
+        width = self.canvas.winfo_width()
+        if coords[0] + offset >= 0 and coords[2] + offset <= width:
+            super(Paddle, self).move(offset, 0)
+            for part in self.car_parts:
+                self.canvas.move(part, offset, 0)
+            if self.ball is not None:
+                self.ball.move(offset, 0)
