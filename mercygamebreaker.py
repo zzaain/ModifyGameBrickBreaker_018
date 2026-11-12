@@ -245,8 +245,130 @@ class Game(tk.Frame):
         else:
             self.canvas.itemconfig(self.hud_lives, text=lives_text)
 
+   def check_collisions(self):
+        ball_coords = self.ball.get_position()
+        items = self.canvas.find_overlapping(*ball_coords)
+        objects = [self.items[x] for x in items if x in self.items]
+        self.ball.collide(objects)
+
+def create_bricks(self):
+        for b in self.bricks:
+            b.delete()
+        self.bricks.clear()
+        
+        for x in range(25, self.width - 25, 75):
+            self.add_brick(x + 37.5, 55, 3, self.game_mode)
+            self.add_brick(x + 37.5, 83, 2, self.game_mode)
+            self.add_brick(x + 37.5, 111, 1, self.game_mode)
+
+    def add_brick(self, x, y, hits, mode):
+        brick = Brick(self.canvas, x, y, hits, self, mode)
+        self.items[brick.item] = brick
+        self.bricks.append(brick)
+
+    def setup_game(self):
+        self.add_ball()
+        self.update_hud()
+        if self.game_mode == 'fire':
+            start_text = 'PRESS SPACE TO RACE (FIRE TRACK)'
+            text_color = '#ffda79'
+        else:
+            start_text = 'PRESS SPACE TO RACE (WATER TRACK)'
+            text_color = '#48dbfb'
+            
+        self.text = self.draw_text(305, 220, start_text, size='20', color=text_color)
+        self.canvas.bind('<space>', lambda _: self.start_game())
+
+    def add_ball(self):
+        if self.ball is not None:
+            self.ball.clear_trail()
+            self.ball.delete()
+        paddle_coords = self.paddle.get_position()
+        x = (paddle_coords[0] + paddle_coords[2]) * 0.5
+        self.ball = Ball(self.canvas, x, 330)
+        self.paddle.set_ball(self.ball)
+
+    def draw_text(self, x, y, text, size='36', color='white'):
+        font = ('Impact', size)
+        return self.canvas.create_text(x, y, text=text, font=font, fill=color)
+
+    def start_game(self):
+        self.canvas.unbind('<space>')
+        self.canvas.delete(self.text)
+        self.paddle.ball = None
+        try:
+            winsound.Beep(1000, 150)
+        except:
+            pass
+        self.game_loop()
+
+    def game_loop(self):
+        self.check_collisions()
+
+        for brick in self.bricks:
+            if brick.hits > 0:
+                brick.animate()
+
+        num_bricks = len(self.canvas.find_withtag('brick'))
+        if num_bricks == 0:
+            self.ball.clear_trail()
+            self.ball.speed = None
+            self.draw_text(305, 210, 'VICTORY! RACE CHAMPION!', size='28', color='#ffda79')
+            try:
+                winsound.Beep(1500, 300)
+            except:
+                pass
+        elif self.ball.get_position()[3] >= self.height:
+            self.ball.clear_trail()
+            self.ball.speed = None
+            self.lives -= 1
+            self.update_hud()
+            try:
+                winsound.Beep(300, 400)
+            except:
+                pass
+
+            if self.lives < 0:
+                if self.game_mode == 'fire':
+                    self.game_mode = 'water'
+                    notif_text = 'PIT STOP! SWITCH TO WATER TRACK!'
+                    notif_color = '#00d2d3'
+                else:
+                    self.game_mode = 'fire'
+                    notif_text = 'PIT STOP! SWITCH BACK TO FIRE TRACK!'
+                    notif_color = '#ff5252'
+
+                self.lives = 3
+                self.create_bricks()
+                self.draw_text(305, 210, notif_text, size='18', color=notif_color)
+                self.after(1500, lambda: [self.canvas.delete('all'), self.restart_full()])
+            else:
+                self.after(1000, self.setup_game)
+        else:
+            self.ball.update()
+            self.after(40, self.game_loop)
+
+    def restart_full(self):
+        self.canvas.delete('all')
+        self.draw_race_track_background()
+        self.items = {}
+        self.bricks = []
+        self.hud_score = None
+        self.hud_lives = None
+        self.paddle = Paddle(self.canvas, self.width / 2, 355)
+        self.items[self.paddle.item] = self.paddle
+        self.create_bricks()
+        self.setup_game()
+
     def check_collisions(self):
         ball_coords = self.ball.get_position()
         items = self.canvas.find_overlapping(*ball_coords)
         objects = [self.items[x] for x in items if x in self.items]
         self.ball.collide(objects)
+
+
+if __name__ == '__main__':
+    root = tk.Tk()
+    root.title('Mercy Race Track BrickBreaker')
+    game = Game(root)
+    game.mainloop()
